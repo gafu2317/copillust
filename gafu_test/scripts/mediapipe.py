@@ -27,30 +27,9 @@ def detect_pose(image):
 
     # 検出結果を描画
     if result.pose_landmarks:
+        # 骨格を描画した画像を作成
         mp_drawing.draw_landmarks(
             image, result.pose_landmarks, mp_pose.POSE_CONNECTIONS
         )
-        # 各関節の座標を取得して出力
-        for i, landmark in enumerate(result.pose_landmarks.landmark):
-            x = landmark.x * width    # x座標をピクセル単位に変換
-            y = landmark.y * height   # y座標をピクセル単位に変換
-            z = landmark.z            # z座標（深度情報）は正規化されている
-            print(f"関節 {i}: x={x:.2f}, y={y:.2f}, z={z:.2f}")
 
     return image  # 骨格を描画した画像を返す
-
-# # 画像を読み込む
-# image_path = "input_image.jpg"  # ここに画像ファイルのパスを指定
-# image = cv2.imread(image_path)
-
-# if image is None:
-#     print("Error: 画像を開けませんでした。")
-#     exit()
-
-# # 骨格を検出
-# output_image = detect_pose(image)
-
-# # 結果を表示
-# cv2.imshow('Pose Detection', output_image)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
