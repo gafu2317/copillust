@@ -8,8 +8,8 @@ from PIL import Image
 
 # データセットクラスの定義
 class PoseDataset(Dataset):
-    def __init__(self, image_paths, annotations, transform=None):
-        self.image_paths = image_paths
+    def __init__(self, images, annotations, transform=None):
+        self.images = images
         self.annotations = annotations
         self.transform = transform
 
