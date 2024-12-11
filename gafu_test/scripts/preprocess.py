@@ -3,21 +3,11 @@ import numpy as np
 import json
 import os
 
-def resize_and_pad_images(image_data_list, target_size=224):
-    """
-    画像とアノテーションをリサイズし、アノテーションを調整する関数。
-
-    Args:
-        image_data_list (list): 画像データとアノテーションの辞書のリスト。
-        target_size (int): リサイズ後の画像のサイズ。
-
-    Returns:
-        list: リサイズされた画像と調整されたアノテーションの辞書のリスト。
-    """
+def resize_and_pad_images(image_data_list, target_size=224, output_dir=''):
     results = []
 
     for image_data in image_data_list:
-        img = cv2.imread(image_data['file_name'])  # 画像を読み込む
+        img = cv2.imread(image_data['file_name'])
 
         # 元のサイズを取得
         original_height, original_width = img.shape[:2]
@@ -51,13 +41,16 @@ def resize_and_pad_images(image_data_list, target_size=224):
 
         adjusted_points = {}
         for key, point in image_data['points'].items():
-            adjusted_x = point[0] * scale_x + left  # パディングを考慮
-            adjusted_y = point[1] * scale_y + top    # パディングを考慮
+            adjusted_x = point[0] * scale_x + left
+            adjusted_y = point[1] * scale_y + top
             adjusted_points[key] = [adjusted_x, adjusted_y]
+
+        # 新しいファイル名を生成
+        new_file_name = os.path.join(output_dir, os.path.basename(image_data['file_name']))
 
         # 新しいアノテーションを作成
         adjusted_data = {
-            "file_name": image_data['file_name'],
+            "file_name": new_file_name,  # 新しいパスを設定
             "points": adjusted_points,
             "width": target_size,
             "height": target_size
@@ -92,20 +85,23 @@ for image_data in image_data_list:
     # 画像が読み込めなかった場合の処理
     if img is None:
         print(f"Error: Image {file_path} could not be loaded. Skipping...")
-        continue  # 画像が読み込めなかった場合はスキップ
+        continue
 
     # ここでリサイズとパディングを実行
-    adjusted_results = resize_and_pad_images([image_data], target_size=224)  # 1つの画像データでリサイズを実行
+    adjusted_results = resize_and_pad_images([image_data], target_size=224, output_dir=img_output_dir)
 
     # リサイズした画像とアノテーションを保存
     for i, (padded_image, adjusted_data) in enumerate(adjusted_results):
         # 画像を保存
-        cv2.imwrite(os.path.join(img_output_dir, f'resized_image_{len(results) + i}.png'), padded_image)
+        resized_image_name = f'resized_image_{len(results) + i}.png'
+        cv2.imwrite(os.path.join(img_output_dir, resized_image_name), padded_image)
 
-        # 調整されたアノテーションを保存
-        with open(os.path.join(annotation_output_dir, f'adjusted_annotations_{len(results) + i}.json'), 'w') as f:
+        # 調整されたアノテーションを保存（正しいディレクトリに保存）
+        adjusted_data['file_name'] = os.path.join(img_output_dir, resized_image_name)  # アノテーションのファイル名を更新
+        annotation_filename = f'adjusted_annotations_{len(results) + i}.json'
+        with open(os.path.join(annotation_output_dir, annotation_filename), 'w') as f:
             json.dump(adjusted_data, f, indent=4)
 
-    results.extend(adjusted_results)  # 結果を追加
+    results.extend(adjusted_results)
 
 print("リサイズ、パディング、アノテーションの調整が完了しました。")
